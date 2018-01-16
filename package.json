@@ -1,0 +1,24 @@
+{
+  "name": "web3ui",
+  "version": "1.0.0",
+  "description": "An example (command line) interface for interacting with an ERC20 contract using web3",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rynobey/web3UI.git"
+  },
+  "author": "Ryno Beyers",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/rynobey/web3UI/issues"
+  },
+  "homepage": "https://github.com/rynobey/web3UI#readme",
+  "dependencies": {
+    "prompt": "^1.0.0",
+    "truffle-contract": "^3.0.2",
+    "web3": "^0.19.0"
+  }
+}
