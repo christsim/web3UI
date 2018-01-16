@@ -53,9 +53,11 @@ async function showTokenBalance(index, callback) {
 
 async function showPrompt() {
   if (currentState == "start") {
-    console.log("\nSelect an option: \n 1) List local accounts on node\n 2) List ether balances of local accounts on node\n 3) Show EIP20 token balance of account\n");
+    console.log("\nSelect an option: \n 1) List local accounts on node\n 2) List ether balances of local accounts on node\n 3) Show EIP20 token balance of account\n 4) Exit\n");
   } else if (currentState == "tokenBalance") {
     console.log("\nEnter the index of the local account:\n");
+  } else if (currentState == "exit") {
+    console.log("\nBye!");
   } else {
     console.log("Unknown state...");
   }
@@ -73,6 +75,9 @@ async function main() {
         listEthBalances(main);
       } else if (answer.option == 3) {
         currentState = "tokenBalance";
+        main();
+      } else if (answer.option == 4) {
+        currentState = "exit";
         main();
       }
     });
