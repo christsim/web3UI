@@ -1,6 +1,6 @@
 var config = require('./config.js');
 var contract = require('truffle-contract');
-var prompt = require('prompt');
+var prompt = require('prompt-async');
 var Web3 = require('web3');
 
 var nodeAddress = "http://" + config.nodeIP + ":" + config.nodePort;
@@ -11,7 +11,6 @@ EIP20.setProvider(web3.currentProvider);
 var eip20;
 
 prompt.start();
-var currentState = "start";
 
 async function getEIP20Instance() {
   let instance = await EIP20.deployed();
@@ -23,9 +22,8 @@ function accounts() {
   return arr;
 }
 
-function listAccounts(callback) {
+function listAccounts() {
   console.log(accounts())
-  callback();
 }
 
 function getEthBalance(account) {
@@ -34,58 +32,84 @@ function getEthBalance(account) {
   return bal;
 }
 
-function listEthBalances(callback) {
+async function listEthBalances() {
   let accArr = accounts();
   for (let acc of accArr) {
-    console.log("Account " + acc + " has " + getEthBalance(acc) + " ether.");
+    console.log(`Account ${acc} has ${getEthBalance(acc)} ether - ${await getTokenBalance(acc)} tokens.`);
   }
-  callback();
 }
 
-async function showTokenBalance(index, callback) {
-  if (!eip20) { eip20 = await getEIP20Instance(); }
+async function getTokenBalance(acc) {
+  if (!eip20) {
+    eip20 = await getEIP20Instance();
+  }
+  return await eip20.balanceOf(acc);
+}
+
+async function showTokenBalance(index) {
+  if (!eip20) {
+    eip20 = await getEIP20Instance();
+  }
   let accArr = accounts();
   let acc = accArr[index];
   let bal = await eip20.balanceOf(acc);
   console.log("Account " + acc + " has " + bal + " tokens.");
-  callback();
+}
+
+async function transferBalance(fromAccount, toAccount, amount) {
+  if (!eip20) {
+    eip20 = await getEIP20Instance();
+  }
+  let accArr = accounts();
+  console.log(`Transferring ${accArr[fromAccount]} => ${accArr[toAccount]} : ${amount}`);
+  let bal = await eip20.transfer(accArr[toAccount], amount, {
+    from: accArr[fromAccount]
+  });
+  console.log("Transferred");
 }
 
 async function showPrompt() {
-  if (currentState == "start") {
-    console.log("\nSelect an option: \n 1) List local accounts on node\n 2) List ether balances of local accounts on node\n 3) Show EIP20 token balance of account\n 4) Exit\n");
-  } else if (currentState == "tokenBalance") {
-    console.log("\nEnter the index of the local account:\n");
-  } else if (currentState == "exit") {
-    console.log("\nBye!");
-  } else {
-    console.log("Unknown state...");
-  }
+    console.log("\nSelect an option: \n 1) List local accounts on node\n 2) List balances of local accounts on node\n 3) Show EIP20 token balance of account\n 4) Transfer\n 5) Exit\n");
 }
 
 async function main() {
-  showPrompt();
-  if (currentState == "start") {
-    prompt.get(['option'], function(err, answer) {
-      if (answer.option == 1) {
-        currentState = "start";
-        listAccounts(main);
-      } else if (answer.option == 2) {
-        currentState = "start";
-        listEthBalances(main);
-      } else if (answer.option == 3) {
-        currentState = "tokenBalance";
-        main();
-      } else if (answer.option == 4) {
-        currentState = "exit";
-        main();
+  while (true) {
+    showPrompt();
+    const {
+      option
+    } = await prompt.get(["option"]);
+
+    try {
+      switch (option) {
+        case '1':
+          listAccounts();
+          break;
+        case '2':
+          await listEthBalances();
+          break;
+        case '3':
+          console.log("\nEnter the index of the local account:\n");
+        
+          var {
+            index
+          } = await prompt.get(['index']);
+          await showTokenBalance(index);
+          break;
+        case '4':
+        console.log("\nEnter the indices of the local accounts to transfer to and from and the amount:\n");
+        var {
+            fromAccount,
+            toAccount,
+            amount
+          } = await prompt.get(["fromAccount", "toAccount", "amount"]);
+          await transferBalance(parseInt(fromAccount), parseInt(toAccount), parseInt(amount));
+          break;
+        case '5':
+          return;
       }
-    });
-  } else if (currentState == "tokenBalance") {
-    prompt.get(['index'], function(err, answer) {
-      currentState = "start";
-      showTokenBalance(answer.index, main);
-    });
+    } catch (err) {
+      console.log(err);
+    }
   }
 }
 
